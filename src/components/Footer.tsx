@@ -1,4 +1,5 @@
 import { profile } from "@/data/portfolio";
+import { VisitCounter } from "@/components/VisitCounter";
 
 export function Footer() {
   return (
@@ -7,7 +8,10 @@ export function Footer() {
         <p>
           © {new Date().getFullYear()} {profile.fullName}
         </p>
-        <p>Full Stack Developer · Cairo, Egypt</p>
+        <p className="flex flex-wrap items-center gap-x-2 gap-y-1">
+          <VisitCounter />
+          <span>Full Stack Developer · Cairo, Egypt</span>
+        </p>
       </div>
     </footer>
   );
