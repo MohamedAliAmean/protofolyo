@@ -2,9 +2,11 @@
 
 import Image from "next/image";
 import { motion } from "framer-motion";
-import { profile } from "@/data/portfolio";
+import type { ProfileData } from "@/lib/types";
 
-export function Hero() {
+export function Hero({ profile }: { profile: ProfileData }) {
+  const imageSrc = profile.profileImageUrl;
+
   return (
     <section
       id="top"
@@ -70,12 +72,13 @@ export function Hero() {
         >
           <div className="relative aspect-[4/5] overflow-hidden rounded-[1.6rem] bg-navy-deep shadow-[var(--shadow)]">
             <Image
-              src="/profile.jpeg"
+              src={imageSrc}
               alt={`${profile.fullName} — Full Stack Developer`}
               fill
               priority
               sizes="(max-width: 1024px) 90vw, 480px"
               className="object-cover object-[50%_18%]"
+              unoptimized={imageSrc.startsWith("http")}
             />
             <div className="absolute inset-0 bg-gradient-to-t from-black/30 via-transparent to-transparent" />
           </div>

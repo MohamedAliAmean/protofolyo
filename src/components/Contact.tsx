@@ -1,17 +1,17 @@
 "use client";
 
-import { profile } from "@/data/portfolio";
 import { Reveal, SectionHeading } from "@/components/Reveal";
+import type { ProfileData } from "@/lib/types";
 
-const links = [
-  { label: "Email", href: `mailto:${profile.email}`, value: profile.email },
-  { label: "Phone", href: profile.phoneHref, value: profile.phone },
-  { label: "WhatsApp", href: profile.whatsapp, value: "Message on WhatsApp" },
-  { label: "LinkedIn", href: profile.linkedin, value: "linkedin.com/in/mohamed-ali-amen" },
-  { label: "GitHub", href: profile.github, value: "github.com/MohamedAliAmean" },
-];
+export function Contact({ profile }: { profile: ProfileData }) {
+  const links = [
+    { label: "Email", href: `mailto:${profile.email}`, value: profile.email },
+    { label: "Phone", href: profile.phoneHref, value: profile.phone },
+    { label: "WhatsApp", href: profile.whatsapp, value: "Message on WhatsApp" },
+    { label: "LinkedIn", href: profile.linkedin, value: "linkedin.com/in/mohamed-ali-amen" },
+    { label: "GitHub", href: profile.github, value: "github.com/MohamedAliAmean" },
+  ];
 
-export function Contact() {
   return (
     <section id="contact" className="section-pad py-20 md:py-28">
       <div className="container-max">

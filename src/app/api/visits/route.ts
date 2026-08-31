@@ -1,8 +1,8 @@
 import { NextResponse } from "next/server";
 import {
   getVisitCount,
-  incrementVisitCount,
   isVisitTrackingEnabled,
+  trackVisit,
 } from "@/lib/visits";
 
 export async function GET() {
@@ -14,11 +14,11 @@ export async function GET() {
   return NextResponse.json({ count, enabled: true });
 }
 
-export async function POST() {
+export async function POST(request: Request) {
   if (!isVisitTrackingEnabled()) {
     return NextResponse.json({ count: 0, enabled: false });
   }
 
-  const count = await incrementVisitCount();
+  const count = await trackVisit(request);
   return NextResponse.json({ count, enabled: true });
 }

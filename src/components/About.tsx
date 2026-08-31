@@ -1,9 +1,9 @@
 "use client";
 
-import { profile } from "@/data/portfolio";
 import { Reveal, SectionHeading } from "@/components/Reveal";
+import type { ProfileData } from "@/lib/types";
 
-export function About() {
+export function About({ profile }: { profile: ProfileData }) {
   return (
     <section id="about" className="section-pad py-20 md:py-28">
       <div className="container-max">

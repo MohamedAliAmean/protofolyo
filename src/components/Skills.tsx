@@ -1,9 +1,9 @@
 "use client";
 
-import { skillGroups } from "@/data/portfolio";
 import { Reveal, SectionHeading } from "@/components/Reveal";
+import type { SkillGroup } from "@/lib/types";
 
-export function Skills() {
+export function Skills({ groups }: { groups: SkillGroup[] }) {
   return (
     <section id="skills" className="section-pad py-20 md:py-28">
       <div className="container-max">
@@ -14,7 +14,7 @@ export function Skills() {
         />
 
         <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-4">
-          {skillGroups.map((group, index) => (
+          {groups.map((group, index) => (
             <Reveal key={group.title} delay={index * 0.06}>
               <h3 className="font-display text-[1.15rem] font-bold text-navy-deep">
                 {group.title}

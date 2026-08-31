@@ -7,19 +7,22 @@ import { Header } from "@/components/Header";
 import { Hero } from "@/components/Hero";
 import { Projects } from "@/components/Projects";
 import { Skills } from "@/components/Skills";
+import { getPortfolioData } from "@/lib/portfolio-data";
 
-export default function Home() {
+export default async function Home() {
+  const data = await getPortfolioData();
+
   return (
     <>
       <AnimatedBackground />
       <Header />
       <main>
-        <Hero />
-        <About />
-        <Experience />
-        <Projects />
-        <Skills />
-        <Contact />
+        <Hero profile={data.profile} />
+        <About profile={data.profile} />
+        <Experience items={data.experience} />
+        <Projects items={data.projects} />
+        <Skills groups={data.skillGroups} />
+        <Contact profile={data.profile} />
       </main>
       <Footer />
     </>

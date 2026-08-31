@@ -1,9 +1,9 @@
 "use client";
 
-import { projects } from "@/data/portfolio";
 import { Reveal, SectionHeading } from "@/components/Reveal";
+import type { ProjectItem } from "@/lib/types";
 
-export function Projects() {
+export function Projects({ items }: { items: ProjectItem[] }) {
   return (
     <section id="projects" className="section-pad py-20 md:py-28">
       <div className="container-max">
@@ -14,7 +14,7 @@ export function Projects() {
         />
 
         <div className="grid gap-5 md:grid-cols-2">
-          {projects.map((project, index) => (
+          {items.map((project, index) => (
             <Reveal key={project.title} delay={Math.min(index * 0.06, 0.24)}>
               {project.href ? (
                 <a
@@ -42,7 +42,7 @@ function ProjectBody({
   project,
   withLink = false,
 }: {
-  project: (typeof projects)[number];
+  project: ProjectItem;
   withLink?: boolean;
 }) {
   return (

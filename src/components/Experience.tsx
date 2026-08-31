@@ -1,9 +1,9 @@
 "use client";
 
-import { experience } from "@/data/portfolio";
 import { Reveal, SectionHeading } from "@/components/Reveal";
+import type { ExperienceItem } from "@/lib/types";
 
-export function Experience() {
+export function Experience({ items }: { items: ExperienceItem[] }) {
   return (
     <section id="experience" className="section-pad py-20 md:py-28">
       <div className="container-max">
@@ -14,7 +14,7 @@ export function Experience() {
         />
 
         <div className="relative space-y-0 border-l border-[var(--line)] pl-6 md:pl-8">
-          {experience.map((job, index) => (
+          {items.map((job, index) => (
             <Reveal key={`${job.company}-${job.period}`} delay={Math.min(index * 0.04, 0.24)}>
               <article className="relative pb-12 last:pb-0">
                 <span className="absolute -left-[1.9rem] top-1.5 h-3 w-3 rounded-full border-2 border-accent bg-[var(--bg-elevated)] md:-left-[2.4rem]" />
