@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 
@@ -10,6 +10,24 @@ export default function AdminLoginPage() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [checkingSession, setCheckingSession] = useState(true);
+
+  useEffect(() => {
+    async function checkSession() {
+      try {
+        const supabase = createClient();
+        const {
+          data: { user },
+        } = await supabase.auth.getUser();
+        if (user) router.replace("/admin");
+      } catch {
+        // Env vars missing or auth unavailable — show login form
+      } finally {
+        setCheckingSession(false);
+      }
+    }
+    checkSession();
+  }, [router]);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -34,6 +52,9 @@ export default function AdminLoginPage() {
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-bg px-4">
+      {checkingSession ? (
+        <p className="text-sm text-ink-muted">Loading...</p>
+      ) : (
       <form
         onSubmit={handleSubmit}
         className="surface-card w-full max-w-md p-8"
@@ -78,6 +99,7 @@ export default function AdminLoginPage() {
           {loading ? "Signing in..." : "Sign in"}
         </button>
       </form>
+      )}
     </div>
   );
 }
