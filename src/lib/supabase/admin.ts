@@ -20,3 +20,11 @@ export function isSupabaseConfigured() {
       process.env.SUPABASE_SERVICE_ROLE_KEY,
   );
 }
+
+export function getSupabaseConfigStatus() {
+  return {
+    url: Boolean(process.env.NEXT_PUBLIC_SUPABASE_URL),
+    anonKey: Boolean(process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY),
+    serviceRoleKey: Boolean(process.env.SUPABASE_SERVICE_ROLE_KEY),
+  };
+}

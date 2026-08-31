@@ -1,10 +1,20 @@
 import { NextResponse } from "next/server";
 import { seedPortfolioData } from "@/lib/portfolio-data";
-import { isSupabaseConfigured } from "@/lib/supabase/admin";
+import {
+  getSupabaseConfigStatus,
+  isSupabaseConfigured,
+} from "@/lib/supabase/admin";
 
 async function runSeed() {
   if (!isSupabaseConfigured()) {
-    return NextResponse.json({ error: "Supabase not configured" }, { status: 500 });
+    return NextResponse.json(
+      {
+        error: "Supabase not configured on Vercel",
+        missing: getSupabaseConfigStatus(),
+        hint: "Add NEXT_PUBLIC_SUPABASE_URL, NEXT_PUBLIC_SUPABASE_ANON_KEY, and SUPABASE_SERVICE_ROLE_KEY in Vercel → Settings → Environments → Environment Variables, then Redeploy.",
+      },
+      { status: 500 },
+    );
   }
 
   try {
