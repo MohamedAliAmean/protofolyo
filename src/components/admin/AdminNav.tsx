@@ -8,6 +8,7 @@ const links = [
   { href: "/admin/projects", label: "Projects" },
   { href: "/admin/skills", label: "Skills" },
   { href: "/admin/visitors", label: "Visitors" },
+  { href: "/admin/messages", label: "Messages" },
 ];
 
 export function AdminNav() {

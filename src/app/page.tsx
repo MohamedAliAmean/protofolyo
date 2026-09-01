@@ -8,6 +8,7 @@ import { Hero } from "@/components/Hero";
 import { Projects } from "@/components/Projects";
 import { Skills } from "@/components/Skills";
 import { VisitTracker } from "@/components/VisitTracker";
+import { ChatWidget } from "@/components/chat/ChatWidget";
 import { getPortfolioData } from "@/lib/portfolio-data";
 
 export default async function Home() {
@@ -27,6 +28,7 @@ export default async function Home() {
         <Contact profile={data.profile} />
       </main>
       <Footer />
+      <ChatWidget />
     </>
   );
 }

@@ -45,8 +45,8 @@ export default async function AdminDashboardPage() {
         <Link href="/admin/profile" className="surface-card block p-5 hover:-translate-y-0.5">
           Edit About & Profile Image
         </Link>
-        <Link href="/admin/visitors" className="surface-card block p-5 hover:-translate-y-0.5">
-          View Visitor Logs
+        <Link href="/admin/messages" className="surface-card block p-5 hover:-translate-y-0.5">
+          View & Reply to Messages
         </Link>
       </div>
     </div>

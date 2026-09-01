@@ -152,3 +152,17 @@ export async function signOut() {
   await supabase.auth.signOut();
   redirect("/admin/login");
 }
+
+export async function replyToConversation(formData: FormData) {
+  await requireAdmin();
+  const conversationId = String(formData.get("conversation_id") ?? "");
+  const content = String(formData.get("content") ?? "").trim();
+
+  if (!conversationId || !content) {
+    throw new Error("Conversation and message are required");
+  }
+
+  const { sendAdminMessage } = await import("@/lib/chat");
+  await sendAdminMessage(conversationId, content);
+  revalidatePath("/admin/messages");
+}
