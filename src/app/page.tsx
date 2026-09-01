@@ -7,6 +7,7 @@ import { Header } from "@/components/Header";
 import { Hero } from "@/components/Hero";
 import { Projects } from "@/components/Projects";
 import { Skills } from "@/components/Skills";
+import { VisitTracker } from "@/components/VisitTracker";
 import { getPortfolioData } from "@/lib/portfolio-data";
 
 export default async function Home() {
@@ -14,6 +15,7 @@ export default async function Home() {
 
   return (
     <>
+      <VisitTracker />
       <AnimatedBackground />
       <Header />
       <main>
