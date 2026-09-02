@@ -1,4 +1,3 @@
-import { revalidatePath } from "next/cache";
 import { createAdminClient, isSupabaseConfigured } from "@/lib/supabase/admin";
 
 export type AdminNotificationCounts = {
@@ -64,8 +63,6 @@ export async function markVisitorsSeen() {
     .from("site_stats")
     .update({ last_seen_visitors_at: new Date().toISOString() })
     .eq("id", 1);
-
-  revalidatePath("/admin", "layout");
 }
 
 export async function markMessagesSeen() {
@@ -76,6 +73,4 @@ export async function markMessagesSeen() {
     .from("site_stats")
     .update({ last_seen_messages_at: new Date().toISOString() })
     .eq("id", 1);
-
-  revalidatePath("/admin", "layout");
 }

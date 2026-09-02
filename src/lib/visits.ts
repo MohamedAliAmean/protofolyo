@@ -150,3 +150,26 @@ export async function updateVisitorEngagement(
 export function isVisitTrackingEnabled() {
   return isSupabaseConfigured();
 }
+
+export async function listVisitorsForAdmin(limit = 100) {
+  if (!isSupabaseConfigured()) return [];
+
+  const supabase = createAdminClient();
+  const withSections = await supabase
+    .from("visitors")
+    .select("*, visitor_section_times(section, duration_seconds)")
+    .order("visited_at", { ascending: false })
+    .limit(limit);
+
+  if (!withSections.error) {
+    return withSections.data ?? [];
+  }
+
+  const basic = await supabase
+    .from("visitors")
+    .select("*")
+    .order("visited_at", { ascending: false })
+    .limit(limit);
+
+  return basic.data ?? [];
+}

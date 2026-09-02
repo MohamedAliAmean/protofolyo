@@ -153,6 +153,20 @@ export async function signOut() {
   redirect("/admin/login");
 }
 
+export async function markVisitorsSeenAction() {
+  await requireAdmin();
+  const { markVisitorsSeen } = await import("@/lib/admin-notifications");
+  await markVisitorsSeen();
+  revalidatePath("/admin", "layout");
+}
+
+export async function markMessagesSeenAction() {
+  await requireAdmin();
+  const { markMessagesSeen } = await import("@/lib/admin-notifications");
+  await markMessagesSeen();
+  revalidatePath("/admin", "layout");
+}
+
 export async function replyToConversation(formData: FormData) {
   await requireAdmin();
   const conversationId = String(formData.get("conversation_id") ?? "");
