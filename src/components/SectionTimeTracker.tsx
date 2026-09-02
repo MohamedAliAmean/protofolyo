@@ -3,6 +3,7 @@
 import { useEffect, useRef } from "react";
 
 import { VISITOR_ID_KEY } from "@/components/VisitTracker";
+
 const SECTIONS = [
   "top",
   "about",
@@ -11,6 +12,9 @@ const SECTIONS = [
   "skills",
   "contact",
 ] as const;
+
+const FLUSH_INTERVAL_MS = 5000;
+const TICK_INTERVAL_MS = 500;
 
 type SectionId = (typeof SECTIONS)[number];
 
@@ -31,6 +35,41 @@ function snapshotDurations(
   }
 
   return next;
+}
+
+function resolveActiveSection(): SectionId | null {
+  const viewportHeight =
+    window.innerHeight || document.documentElement.clientHeight;
+  const focusLine = viewportHeight * 0.38;
+
+  for (const section of SECTIONS) {
+    const element = document.getElementById(section);
+    if (!element) continue;
+
+    const rect = element.getBoundingClientRect();
+    if (rect.top <= focusLine && rect.bottom >= focusLine) {
+      return section;
+    }
+  }
+
+  let bestSection: SectionId | null = null;
+  let bestVisible = 0;
+
+  for (const section of SECTIONS) {
+    const element = document.getElementById(section);
+    if (!element) continue;
+
+    const rect = element.getBoundingClientRect();
+    const visibleHeight =
+      Math.min(rect.bottom, viewportHeight) - Math.max(rect.top, 0);
+
+    if (visibleHeight > bestVisible) {
+      bestVisible = visibleHeight;
+      bestSection = section;
+    }
+  }
+
+  return bestVisible >= 120 ? bestSection : null;
 }
 
 async function sendEngagement(
@@ -79,17 +118,14 @@ export function SectionTimeTracker() {
   });
   const activeSectionRef = useRef<SectionId | null>(null);
   const activeSinceRef = useRef<number | null>(null);
+  const hasVisitorIdRef = useRef(false);
 
   useEffect(() => {
-    const elements = SECTIONS.map((section) => ({
-      section,
-      element: document.getElementById(section),
-    })).filter(
-      (entry): entry is { section: SectionId; element: HTMLElement } =>
-        entry.element instanceof HTMLElement,
+    const hasSections = SECTIONS.some(
+      (section) => document.getElementById(section) instanceof HTMLElement,
     );
 
-    if (elements.length === 0) return;
+    if (!hasSections) return;
 
     function setActiveSection(section: SectionId | null) {
       if (activeSectionRef.current === section) return;
@@ -109,6 +145,8 @@ export function SectionTimeTracker() {
       const visitorId = getVisitorId();
       if (!visitorId) return;
 
+      hasVisitorIdRef.current = true;
+
       const sections = snapshotDurations(
         durationsRef.current,
         activeSectionRef.current,
@@ -120,52 +158,45 @@ export function SectionTimeTracker() {
         activeSinceRef.current = Date.now();
       }
 
-      if (useBeacon) {
-        void sendEngagement(visitorId, sections);
-        return;
-      }
-
       void sendEngagement(visitorId, sections);
     }
 
-    const observer = new IntersectionObserver(
-      (entries) => {
-        const visible = entries
-          .filter((entry) => entry.isIntersecting && entry.intersectionRatio >= 0.5)
-          .sort((a, b) => b.intersectionRatio - a.intersectionRatio);
-
-        setActiveSection((visible[0]?.target.id as SectionId | undefined) ?? null);
-      },
-      { threshold: [0.5] },
-    );
-
-    for (const { element } of elements) {
-      observer.observe(element);
+    function tickActiveSection() {
+      setActiveSection(resolveActiveSection());
     }
 
-    const initiallyVisible = elements
-      .map(({ section, element }) => {
-        const rect = element.getBoundingClientRect();
-        const viewportHeight = window.innerHeight || document.documentElement.clientHeight;
-        const visibleHeight =
-          Math.min(rect.bottom, viewportHeight) - Math.max(rect.top, 0);
-        const ratio = visibleHeight / Math.max(rect.height, 1);
-        return { section, ratio };
-      })
-      .filter((entry) => entry.ratio >= 0.5)
-      .sort((a, b) => b.ratio - a.ratio);
+    let scrollTimer: number | null = null;
 
-    setActiveSection(initiallyVisible[0]?.section ?? null);
+    function handleScroll() {
+      if (scrollTimer !== null) return;
+      scrollTimer = window.setTimeout(() => {
+        scrollTimer = null;
+        tickActiveSection();
+      }, 150);
+    }
 
-    const intervalId = window.setInterval(() => flush(false), 20000);
+    tickActiveSection();
+
+    const tickId = window.setInterval(tickActiveSection, TICK_INTERVAL_MS);
+    const flushId = window.setInterval(() => flush(false), FLUSH_INTERVAL_MS);
+    const visitorIdPollId = window.setInterval(() => {
+      if (!hasVisitorIdRef.current && getVisitorId()) {
+        flush(false);
+      }
+    }, 500);
+
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    window.addEventListener("resize", tickActiveSection);
 
     function handleVisibilityChange() {
       if (document.visibilityState === "hidden") {
+        tickActiveSection();
         flush(true);
       }
     }
 
     function handlePageHide() {
+      tickActiveSection();
       flush(true);
     }
 
@@ -173,10 +204,17 @@ export function SectionTimeTracker() {
     window.addEventListener("pagehide", handlePageHide);
 
     return () => {
-      observer.disconnect();
-      window.clearInterval(intervalId);
+      window.clearInterval(tickId);
+      window.clearInterval(flushId);
+      window.clearInterval(visitorIdPollId);
+      if (scrollTimer !== null) {
+        window.clearTimeout(scrollTimer);
+      }
+      window.removeEventListener("scroll", handleScroll);
+      window.removeEventListener("resize", tickActiveSection);
       document.removeEventListener("visibilitychange", handleVisibilityChange);
       window.removeEventListener("pagehide", handlePageHide);
+      tickActiveSection();
       flush(true);
     };
   }, []);
