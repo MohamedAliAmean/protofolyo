@@ -1,11 +1,13 @@
 import Link from "next/link";
 import { requireAdmin } from "@/lib/admin-auth";
+import { getAdminNotificationCounts } from "@/lib/admin-notifications";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getVisitCount } from "@/lib/visits";
 
 export default async function AdminDashboardPage() {
   await requireAdmin();
   const supabase = createAdminClient();
+  const notificationCounts = await getAdminNotificationCounts();
 
   const [visits, experience, projects, skills, visitors] = await Promise.all([
     getVisitCount(),
@@ -46,7 +48,28 @@ export default async function AdminDashboardPage() {
           Edit About & Profile Image
         </Link>
         <Link href="/admin/messages" className="surface-card block p-5 hover:-translate-y-0.5">
-          View & Reply to Messages
+          <span className="flex items-center gap-2">
+            View & Reply to Messages
+            {notificationCounts.unreadMessages > 0 ? (
+              <span className="inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-red-500 px-1.5 text-[0.65rem] font-bold text-white">
+                {notificationCounts.unreadMessages > 99
+                  ? "99+"
+                  : notificationCounts.unreadMessages}
+              </span>
+            ) : null}
+          </span>
+        </Link>
+        <Link href="/admin/visitors" className="surface-card block p-5 hover:-translate-y-0.5">
+          <span className="flex items-center gap-2">
+            View Visitors
+            {notificationCounts.unseenVisitors > 0 ? (
+              <span className="inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-red-500 px-1.5 text-[0.65rem] font-bold text-white">
+                {notificationCounts.unseenVisitors > 99
+                  ? "99+"
+                  : notificationCounts.unseenVisitors}
+              </span>
+            ) : null}
+          </span>
         </Link>
       </div>
     </div>

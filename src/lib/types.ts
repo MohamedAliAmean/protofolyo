@@ -50,6 +50,11 @@ export type SkillGroup = {
   sortOrder?: number;
 };
 
+export type VisitorSectionTime = {
+  section: string;
+  duration_seconds: number;
+};
+
 export type VisitorRecord = {
   id: string;
   ip: string | null;
@@ -58,6 +63,8 @@ export type VisitorRecord = {
   region: string | null;
   user_agent: string | null;
   visited_at: string;
+  total_time_seconds?: number;
+  visitor_section_times?: VisitorSectionTime[];
 };
 
 export type PortfolioData = {

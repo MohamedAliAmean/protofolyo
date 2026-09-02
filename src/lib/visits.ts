@@ -49,21 +49,45 @@ export async function getVisitCount(): Promise<number> {
   return data?.total_visits ?? 0;
 }
 
-export async function trackVisit(request: Request): Promise<number> {
-  if (!isSupabaseConfigured()) return 0;
+const TRACKED_SECTIONS = [
+  "top",
+  "about",
+  "experience",
+  "projects",
+  "skills",
+  "contact",
+] as const;
+
+export type TrackVisitResult = {
+  count: number;
+  visitorId: string | null;
+};
+
+export type VisitorEngagementPayload = {
+  visitorId: string;
+  sections: Record<string, number>;
+  totalSeconds: number;
+};
+
+export async function trackVisit(request: Request): Promise<TrackVisitResult> {
+  if (!isSupabaseConfigured()) return { count: 0, visitorId: null };
 
   const supabase = createAdminClient();
   const ip = getClientIp(request);
   const userAgent = request.headers.get("user-agent");
   const geo = await geolocateIp(ip);
 
-  await supabase.from("visitors").insert({
-    ip,
-    country: geo.country,
-    city: geo.city,
-    region: geo.region,
-    user_agent: userAgent,
-  });
+  const { data: inserted } = await supabase
+    .from("visitors")
+    .insert({
+      ip,
+      country: geo.country,
+      city: geo.city,
+      region: geo.region,
+      user_agent: userAgent,
+    })
+    .select("id")
+    .single();
 
   const current = await getVisitCount();
   const next = current + 1;
@@ -73,7 +97,54 @@ export async function trackVisit(request: Request): Promise<number> {
     .update({ total_visits: next })
     .eq("id", 1);
 
-  return next;
+  return { count: next, visitorId: inserted?.id ?? null };
+}
+
+export async function updateVisitorEngagement(
+  payload: VisitorEngagementPayload,
+): Promise<boolean> {
+  if (!isSupabaseConfigured()) return false;
+
+  const supabase = createAdminClient();
+  const sections = Object.fromEntries(
+    Object.entries(payload.sections).filter(([section, seconds]) => {
+      return (
+        TRACKED_SECTIONS.includes(
+          section as (typeof TRACKED_SECTIONS)[number],
+        ) && Number.isFinite(seconds)
+      );
+    }),
+  );
+
+  const totalSeconds = Math.max(
+    0,
+    Math.round(
+      Number.isFinite(payload.totalSeconds)
+        ? payload.totalSeconds
+        : Object.values(sections).reduce((sum, value) => sum + value, 0),
+    ),
+  );
+
+  const { error: visitorError } = await supabase
+    .from("visitors")
+    .update({ total_time_seconds: totalSeconds })
+    .eq("id", payload.visitorId);
+
+  if (visitorError) return false;
+
+  const rows = Object.entries(sections).map(([section, duration_seconds]) => ({
+    visitor_id: payload.visitorId,
+    section,
+    duration_seconds: Math.max(0, Math.round(duration_seconds)),
+  }));
+
+  if (rows.length === 0) return true;
+
+  const { error: sectionError } = await supabase
+    .from("visitor_section_times")
+    .upsert(rows, { onConflict: "visitor_id,section" });
+
+  return !sectionError;
 }
 
 export function isVisitTrackingEnabled() {

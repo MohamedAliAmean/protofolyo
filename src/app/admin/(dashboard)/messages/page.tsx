@@ -1,4 +1,5 @@
 import { requireAdmin } from "@/lib/admin-auth";
+import { markMessagesSeen } from "@/lib/admin-notifications";
 import { getConversationMessages, listConversations } from "@/lib/chat";
 import { AdminMessagesClient } from "@/components/admin/AdminMessagesClient";
 
@@ -8,6 +9,7 @@ export default async function AdminMessagesPage({
   searchParams: Promise<{ id?: string }>;
 }) {
   await requireAdmin();
+  await markMessagesSeen();
   const params = await searchParams;
   const conversations = await listConversations();
   const selectedId = params.id ?? conversations[0]?.id ?? null;

@@ -16,9 +16,9 @@ export async function GET() {
 
 export async function POST(request: Request) {
   if (!isVisitTrackingEnabled()) {
-    return NextResponse.json({ count: 0, enabled: false });
+    return NextResponse.json({ count: 0, visitorId: null, enabled: false });
   }
 
-  const count = await trackVisit(request);
-  return NextResponse.json({ count, enabled: true });
+  const { count, visitorId } = await trackVisit(request);
+  return NextResponse.json({ count, visitorId, enabled: true });
 }

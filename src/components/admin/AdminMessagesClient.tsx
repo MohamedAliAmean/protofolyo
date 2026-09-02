@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { replyToConversation } from "@/app/admin/actions";
+import { LocalDateTime } from "@/components/admin/LocalDateTime";
 import type { ChatMessage, ConversationWithPreview } from "@/lib/chat-types";
 
 export function AdminMessagesClient({
@@ -98,7 +99,7 @@ export function AdminMessagesClient({
                 {conv.last_message || "No messages"}
               </p>
               <p className="mt-1 text-[0.7rem] text-ink-muted/80">
-                {new Date(conv.last_message_at).toLocaleString()}
+                <LocalDateTime value={conv.last_message_at} />
               </p>
             </button>
           ))
