@@ -13,7 +13,7 @@ const SECTIONS = [
   "contact",
 ] as const;
 
-const FLUSH_INTERVAL_MS = 5000;
+const FLUSH_INTERVAL_MS = 1000;
 const TICK_INTERVAL_MS = 500;
 
 type SectionId = (typeof SECTIONS)[number];
