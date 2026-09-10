@@ -98,6 +98,13 @@ export default function AdminLoginPage() {
         >
           {loading ? "Signing in..." : "Sign in"}
         </button>
+
+        <p className="mt-4 break-all text-center text-[0.65rem] text-ink-muted/70">
+          Auth project:{" "}
+          {(process.env.NEXT_PUBLIC_SUPABASE_URL ?? "")
+            .replace("https://", "")
+            .replace(".supabase.co", "") || "missing"}
+        </p>
       </form>
       )}
     </div>
