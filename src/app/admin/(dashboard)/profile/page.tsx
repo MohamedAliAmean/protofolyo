@@ -12,7 +12,7 @@ export default async function AdminProfilePage() {
         About & Profile Image
       </h1>
       <p className="mt-2 text-ink-muted">
-        Update your bio, contact info, and profile photo.
+        Update your bio, contact info, profile gallery, and CV.
       </p>
       <div className="mt-8">
         <ProfileForm profile={data.profile} />

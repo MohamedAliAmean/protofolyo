@@ -1,11 +1,16 @@
 "use client";
 
-import Image from "next/image";
 import { motion } from "framer-motion";
+import { HeroGallery } from "@/components/HeroGallery";
 import type { ProfileData } from "@/lib/types";
 
 export function Hero({ profile }: { profile: ProfileData }) {
-  const imageSrc = profile.profileImageUrl;
+  const gallery =
+    profile.galleryUrls?.length > 0
+      ? profile.galleryUrls
+      : profile.profileImageUrl
+        ? [profile.profileImageUrl]
+        : [];
 
   return (
     <section
@@ -41,6 +46,14 @@ export function Hero({ profile }: { profile: ProfileData }) {
             >
               Contact me
             </a>
+            {profile.cvUrl ? (
+              <a
+                href="/api/cv"
+                className="inline-flex items-center justify-center rounded-xl border border-[var(--line)] bg-[var(--surface)] px-5 py-3 text-[0.95rem] font-semibold tracking-[-0.01em] text-navy transition hover:border-accent/40"
+              >
+                Download CV
+              </a>
+            ) : null}
           </div>
 
           <div className="mt-10 flex flex-wrap gap-x-6 gap-y-2 text-[0.95rem] font-medium text-ink-muted">
@@ -68,20 +81,14 @@ export function Hero({ profile }: { profile: ProfileData }) {
           initial={{ opacity: 0, scale: 0.96, y: 20 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
           transition={{ duration: 0.85, delay: 0.12, ease: [0.22, 1, 0.36, 1] }}
-          className="photo-frame float-soft mx-auto w-full max-w-[420px] lg:max-w-none"
+          className={`mx-auto w-full max-w-[420px] lg:max-w-none ${
+            gallery.length > 1 ? "" : "photo-frame float-soft"
+          }`}
         >
-          <div className="relative aspect-[4/5] overflow-hidden rounded-[1.6rem] bg-navy-deep shadow-[var(--shadow)]">
-            <Image
-              src={imageSrc}
-              alt={`${profile.fullName} — Full Stack Developer`}
-              fill
-              priority
-              sizes="(max-width: 1024px) 90vw, 480px"
-              className="object-cover object-[50%_18%]"
-              unoptimized={imageSrc.startsWith("http")}
-            />
-            <div className="absolute inset-0 bg-gradient-to-t from-black/30 via-transparent to-transparent" />
-          </div>
+          <HeroGallery
+            images={gallery}
+            alt={`${profile.fullName} — Full Stack Developer`}
+          />
         </motion.div>
       </div>
     </section>

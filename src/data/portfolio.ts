@@ -14,6 +14,8 @@ export const profile = {
     "Full Stack Developer with production ownership across wedding marketplaces, CRM systems, and event platforms. Ships end-to-end features: REST APIs, auth/RBAC, bilingual Arabic/English UIs, queue/webhook workflows, and Dockerized Laravel services.",
   shortPitch:
     "I build production systems end-to-end — from REST APIs and auth to bilingual UIs and reliable deploy workflows.",
+  cvUrl: "",
+  galleryUrls: ["/profile.jpeg"],
   education: [
     {
       school: "ITI — Open Source Application Development Diploma",

@@ -24,6 +24,19 @@ export async function updateProfile(formData: FormData) {
       github: String(formData.get("github") ?? ""),
       whatsapp: String(formData.get("whatsapp") ?? ""),
       profile_image_url: String(formData.get("profile_image_url") ?? ""),
+      gallery_urls: (() => {
+        const raw = String(formData.get("gallery_urls") ?? "[]");
+        try {
+          const parsed = JSON.parse(raw) as unknown;
+          if (!Array.isArray(parsed)) return [];
+          return parsed.filter(
+            (url): url is string => typeof url === "string" && url.length > 0,
+          );
+        } catch {
+          return [];
+        }
+      })(),
+      cv_url: String(formData.get("cv_url") ?? "") || null,
       updated_at: new Date().toISOString(),
     })
     .eq("id", 1);

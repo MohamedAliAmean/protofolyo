@@ -19,6 +19,8 @@ export type ProfileData = {
   summary: string;
   shortPitch: string;
   profileImageUrl: string;
+  galleryUrls: string[];
+  cvUrl: string;
   education: EducationItem[];
 };
 
@@ -88,6 +90,8 @@ export type DbProfile = {
   github: string | null;
   whatsapp: string | null;
   profile_image_url: string | null;
+  gallery_urls: string[] | null;
+  cv_url: string | null;
   education: EducationItem[] | null;
 };
 

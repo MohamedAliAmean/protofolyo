@@ -10,6 +10,9 @@ export function Contact({ profile }: { profile: ProfileData }) {
     { label: "WhatsApp", href: profile.whatsapp, value: "Message on WhatsApp" },
     { label: "LinkedIn", href: profile.linkedin, value: "linkedin.com/in/mohamed-ali-amen" },
     { label: "GitHub", href: profile.github, value: "github.com/MohamedAliAmean" },
+    ...(profile.cvUrl
+      ? [{ label: "CV", href: "/api/cv", value: "Download resume (PDF)" }]
+      : []),
   ];
 
   return (

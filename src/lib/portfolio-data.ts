@@ -16,6 +16,12 @@ import type {
 
 function mapProfile(row: DbProfile): ProfileData {
   const phoneDigits = row.phone.replace(/\s/g, "");
+  const fallbackImage = row.profile_image_url ?? "/profile.jpeg";
+  const galleryFromDb = Array.isArray(row.gallery_urls)
+    ? row.gallery_urls.filter((url): url is string => typeof url === "string" && url.length > 0)
+    : [];
+  const galleryUrls = galleryFromDb.length > 0 ? galleryFromDb : [fallbackImage];
+
   return {
     name: row.full_name.split(" ").slice(0, 2).join(" ") || row.full_name,
     fullName: row.full_name,
@@ -30,7 +36,9 @@ function mapProfile(row: DbProfile): ProfileData {
     github: row.github ?? staticProfile.github,
     summary: row.summary,
     shortPitch: row.short_pitch,
-    profileImageUrl: row.profile_image_url ?? "/profile.jpeg",
+    profileImageUrl: galleryUrls[0] ?? fallbackImage,
+    galleryUrls,
+    cvUrl: row.cv_url ?? staticProfile.cvUrl ?? "",
     education: row.education?.length ? row.education : staticProfile.education,
   };
 }
@@ -40,6 +48,8 @@ function staticPortfolioData(): PortfolioData {
     profile: {
       ...staticProfile,
       profileImageUrl: "/profile.jpeg",
+      galleryUrls: ["/profile.jpeg"],
+      cvUrl: staticProfile.cvUrl ?? "",
     },
     experience: staticExperience,
     projects: staticProjects,
