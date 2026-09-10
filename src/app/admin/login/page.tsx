@@ -46,8 +46,8 @@ export default function AdminLoginPage() {
       return;
     }
 
-    router.push("/admin");
-    router.refresh();
+    // Full navigation so auth cookies are sent on the next /admin request (important on Vercel).
+    window.location.assign("/admin");
   }
 
   return (
