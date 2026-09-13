@@ -1,32 +1,62 @@
+import { shouldSkipVisitTracking } from "@/lib/bot-filter";
 import { createAdminClient, isSupabaseConfigured } from "@/lib/supabase/admin";
 
 type GeoData = {
   country: string | null;
   city: string | null;
   region: string | null;
+  org: string | null;
+  isHosting: boolean;
+  isProxy: boolean;
 };
+
+const DEDUPE_WINDOW_MINUTES = 60;
 
 async function geolocateIp(ip: string): Promise<GeoData> {
   if (!ip || ip === "127.0.0.1" || ip === "::1") {
-    return { country: "Local", city: "Localhost", region: null };
+    return {
+      country: "Local",
+      city: "Localhost",
+      region: null,
+      org: null,
+      isHosting: false,
+      isProxy: false,
+    };
   }
 
   try {
     const response = await fetch(
-      `http://ip-api.com/json/${ip}?fields=status,country,regionName,city`,
+      `http://ip-api.com/json/${ip}?fields=status,country,regionName,city,org,proxy,hosting`,
       { cache: "no-store" },
     );
     const data = await response.json();
     if (data.status !== "success") {
-      return { country: null, city: null, region: null };
+      return {
+        country: null,
+        city: null,
+        region: null,
+        org: null,
+        isHosting: false,
+        isProxy: false,
+      };
     }
     return {
       country: data.country ?? null,
       city: data.city ?? null,
       region: data.regionName ?? null,
+      org: data.org ?? null,
+      isHosting: Boolean(data.hosting),
+      isProxy: Boolean(data.proxy),
     };
   } catch {
-    return { country: null, city: null, region: null };
+    return {
+      country: null,
+      city: null,
+      region: null,
+      org: null,
+      isHosting: false,
+      isProxy: false,
+    };
   }
 }
 
@@ -76,6 +106,39 @@ export async function trackVisit(request: Request): Promise<TrackVisitResult> {
   const ip = getClientIp(request);
   const userAgent = request.headers.get("user-agent");
   const geo = await geolocateIp(ip);
+
+  if (
+    shouldSkipVisitTracking({
+      userAgent,
+      ip,
+      city: geo.city,
+      org: geo.org,
+      isHosting: geo.isHosting,
+      isProxy: geo.isProxy,
+    })
+  ) {
+    const count = await getVisitCount();
+    return { count, visitorId: null };
+  }
+
+  // Avoid spam rows from the same IP within a short window
+  const since = new Date(
+    Date.now() - DEDUPE_WINDOW_MINUTES * 60 * 1000,
+  ).toISOString();
+
+  const { data: recent } = await supabase
+    .from("visitors")
+    .select("id")
+    .eq("ip", ip)
+    .gte("visited_at", since)
+    .order("visited_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  if (recent?.id) {
+    const count = await getVisitCount();
+    return { count, visitorId: recent.id };
+  }
 
   const { data: inserted } = await supabase
     .from("visitors")
