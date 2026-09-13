@@ -19,6 +19,6 @@ export async function POST(request: Request) {
     return NextResponse.json({ count: 0, visitorId: null, enabled: false });
   }
 
-  const { count, visitorId } = await trackVisit(request);
-  return NextResponse.json({ count, visitorId, enabled: true });
+  const { count, visitorId, skipped } = await trackVisit(request);
+  return NextResponse.json({ count, visitorId, skipped: Boolean(skipped), enabled: true });
 }
