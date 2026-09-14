@@ -2,16 +2,20 @@
 
 import { useState } from "react";
 import { createClient } from "@/lib/supabase/client";
+import { saveProfileMedia } from "@/app/admin/actions";
 
 export function CvUpload({
   currentUrl,
   onUploaded,
+  galleryUrls = [],
 }: {
   currentUrl: string;
   onUploaded: (url: string) => void;
+  galleryUrls?: string[];
 }) {
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState("");
+  const [savedMsg, setSavedMsg] = useState("");
 
   async function handleUpload(file: File) {
     if (file.type !== "application/pdf") {
@@ -21,6 +25,7 @@ export function CvUpload({
 
     setUploading(true);
     setError("");
+    setSavedMsg("");
     const supabase = createClient();
     const path = `cv/mohamed-diab-cv.pdf`;
 
@@ -38,9 +43,18 @@ export function CvUpload({
     }
 
     const { data } = supabase.storage.from("portfolio").getPublicUrl(path);
-    // Cache-bust so browsers pick up the newly uploaded PDF
-    onUploaded(`${data.publicUrl}?v=${Date.now()}`);
-    setUploading(false);
+    const nextUrl = `${data.publicUrl}?v=${Date.now()}`;
+
+    try {
+      await saveProfileMedia({ galleryUrls, cvUrl: nextUrl });
+      onUploaded(nextUrl);
+      setSavedMsg("CV saved.");
+      setTimeout(() => setSavedMsg(""), 2000);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to save CV");
+    } finally {
+      setUploading(false);
+    }
   }
 
   return (
@@ -48,7 +62,7 @@ export function CvUpload({
       <div>
         <p className="text-sm font-medium text-navy-deep">CV / Resume (PDF)</p>
         <p className="mt-1 text-xs text-ink-muted">
-          Upload a PDF. Visitors can download it from the homepage.
+          Upload a PDF. It is saved automatically after upload.
         </p>
       </div>
 
@@ -70,11 +84,12 @@ export function CvUpload({
         accept="application/pdf,.pdf"
         onChange={(e) => {
           const file = e.target.files?.[0];
-          if (file) handleUpload(file);
+          if (file) void handleUpload(file);
         }}
         className="block w-full text-sm text-ink-muted"
       />
       {uploading ? <p className="text-sm text-accent">Uploading...</p> : null}
+      {savedMsg ? <p className="text-sm text-accent">{savedMsg}</p> : null}
       {error ? <p className="text-sm text-red-500">{error}</p> : null}
     </div>
   );

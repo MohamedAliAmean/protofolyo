@@ -9,41 +9,96 @@ export async function updateProfile(formData: FormData) {
   await requireAdmin();
   const supabase = createAdminClient();
 
-  const { error } = await supabase
-    .from("profile")
-    .update({
-      full_name: String(formData.get("full_name") ?? ""),
-      title: String(formData.get("title") ?? ""),
-      stack_line: String(formData.get("stack_line") ?? ""),
-      location: String(formData.get("location") ?? ""),
-      summary: String(formData.get("summary") ?? ""),
-      short_pitch: String(formData.get("short_pitch") ?? ""),
-      email: String(formData.get("email") ?? ""),
-      phone: String(formData.get("phone") ?? ""),
-      linkedin: String(formData.get("linkedin") ?? ""),
-      github: String(formData.get("github") ?? ""),
-      whatsapp: String(formData.get("whatsapp") ?? ""),
-      profile_image_url: String(formData.get("profile_image_url") ?? ""),
-      gallery_urls: (() => {
-        const raw = String(formData.get("gallery_urls") ?? "[]");
-        try {
-          const parsed = JSON.parse(raw) as unknown;
-          if (!Array.isArray(parsed)) return [];
-          return parsed.filter(
-            (url): url is string => typeof url === "string" && url.length > 0,
-          );
-        } catch {
-          return [];
-        }
-      })(),
-      cv_url: String(formData.get("cv_url") ?? "") || null,
-      updated_at: new Date().toISOString(),
-    })
-    .eq("id", 1);
+  const galleryUrls = (() => {
+    const raw = String(formData.get("gallery_urls") ?? "[]");
+    try {
+      const parsed = JSON.parse(raw) as unknown;
+      if (!Array.isArray(parsed)) return [] as string[];
+      return parsed.filter(
+        (url): url is string => typeof url === "string" && url.length > 0,
+      );
+    } catch {
+      return [] as string[];
+    }
+  })();
+
+  const payload = {
+    id: 1,
+    full_name: String(formData.get("full_name") ?? ""),
+    title: String(formData.get("title") ?? ""),
+    stack_line: String(formData.get("stack_line") ?? ""),
+    location: String(formData.get("location") ?? ""),
+    summary: String(formData.get("summary") ?? ""),
+    short_pitch: String(formData.get("short_pitch") ?? ""),
+    email: String(formData.get("email") ?? ""),
+    phone: String(formData.get("phone") ?? ""),
+    linkedin: String(formData.get("linkedin") ?? ""),
+    github: String(formData.get("github") ?? ""),
+    whatsapp: String(formData.get("whatsapp") ?? ""),
+    profile_image_url: String(formData.get("profile_image_url") ?? "") || galleryUrls[0] || null,
+    gallery_urls: galleryUrls,
+    cv_url: String(formData.get("cv_url") ?? "") || null,
+    updated_at: new Date().toISOString(),
+  };
+
+  const { error } = await supabase.from("profile").upsert(payload, { onConflict: "id" });
 
   if (error) throw new Error(error.message);
   revalidatePath("/");
   revalidatePath("/admin/profile");
+}
+
+export async function saveProfileMedia(input: {
+  galleryUrls: string[];
+  cvUrl?: string | null;
+}) {
+  await requireAdmin();
+  const supabase = createAdminClient();
+
+  const galleryUrls = input.galleryUrls.filter(
+    (url): url is string => typeof url === "string" && url.length > 0,
+  );
+
+  const payload: Record<string, unknown> = {
+    id: 1,
+    profile_image_url: galleryUrls[0] ?? null,
+    gallery_urls: galleryUrls,
+    updated_at: new Date().toISOString(),
+  };
+
+  if (input.cvUrl !== undefined) {
+    payload.cv_url = input.cvUrl || null;
+  }
+
+  // Ensure a profile row exists even before the first full save/seed.
+  const { data: existing } = await supabase
+    .from("profile")
+    .select("id")
+    .eq("id", 1)
+    .maybeSingle();
+
+  if (!existing) {
+    const { error: insertError } = await supabase.from("profile").insert({
+      id: 1,
+      full_name: "",
+      title: "",
+      stack_line: "",
+      location: "",
+      summary: "",
+      short_pitch: "",
+      email: "",
+      phone: "",
+      ...payload,
+    });
+    if (insertError) throw new Error(insertError.message);
+  } else {
+    const { error } = await supabase.from("profile").update(payload).eq("id", 1);
+    if (error) throw new Error(error.message);
+  }
+
+  revalidatePath("/");
+  revalidatePath("/admin/profile");
+  return { ok: true as const };
 }
 
 export async function saveExperience(formData: FormData) {

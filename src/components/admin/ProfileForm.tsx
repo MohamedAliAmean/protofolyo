@@ -24,9 +24,13 @@ export function ProfileForm({ profile }: { profile: ProfileData }) {
         formData.set("profile_image_url", galleryUrls[0] ?? "");
         formData.set("gallery_urls", JSON.stringify(galleryUrls));
         formData.set("cv_url", cvUrl);
-        await updateProfile(formData);
-        setSaved(true);
-        setTimeout(() => setSaved(false), 2000);
+        try {
+          await updateProfile(formData);
+          setSaved(true);
+          setTimeout(() => setSaved(false), 2000);
+        } catch (err) {
+          alert(err instanceof Error ? err.message : "Save failed");
+        }
       }}
       className="space-y-5"
     >
@@ -34,7 +38,11 @@ export function ProfileForm({ profile }: { profile: ProfileData }) {
       <input type="hidden" name="profile_image_url" value={galleryUrls[0] ?? ""} />
       <input type="hidden" name="gallery_urls" value={JSON.stringify(galleryUrls)} />
 
-      <CvUpload currentUrl={cvUrl} onUploaded={setCvUrl} />
+      <CvUpload
+        currentUrl={cvUrl}
+        onUploaded={setCvUrl}
+        galleryUrls={galleryUrls}
+      />
       <input type="hidden" name="cv_url" value={cvUrl} />
 
       <div className="grid gap-4 md:grid-cols-2">

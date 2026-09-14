@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { createClient } from "@/lib/supabase/client";
+import { saveProfileMedia } from "@/app/admin/actions";
 
 export function ProfileGalleryUpload({
   urls,
@@ -11,7 +12,25 @@ export function ProfileGalleryUpload({
   onChange: (urls: string[]) => void;
 }) {
   const [uploading, setUploading] = useState(false);
+  const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
+  const [savedMsg, setSavedMsg] = useState("");
+
+  async function persist(nextUrls: string[]) {
+    setSaving(true);
+    setError("");
+    setSavedMsg("");
+    try {
+      await saveProfileMedia({ galleryUrls: nextUrls });
+      onChange(nextUrls);
+      setSavedMsg("Gallery saved.");
+      setTimeout(() => setSavedMsg(""), 2000);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to save gallery");
+    } finally {
+      setSaving(false);
+    }
+  }
 
   async function handleUpload(files: FileList | null) {
     if (!files || files.length === 0) return;
@@ -44,23 +63,23 @@ export function ProfileGalleryUpload({
         nextUrls.push(data.publicUrl);
       }
 
-      onChange(nextUrls);
+      await persist(nextUrls);
     } finally {
       setUploading(false);
     }
   }
 
-  function removeAt(index: number) {
-    onChange(urls.filter((_, i) => i !== index));
+  async function removeAt(index: number) {
+    await persist(urls.filter((_, i) => i !== index));
   }
 
-  function move(index: number, direction: -1 | 1) {
+  async function move(index: number, direction: -1 | 1) {
     const target = index + direction;
     if (target < 0 || target >= urls.length) return;
     const next = [...urls];
     const [item] = next.splice(index, 1);
     next.splice(target, 0, item);
-    onChange(next);
+    await persist(next);
   }
 
   return (
@@ -68,7 +87,7 @@ export function ProfileGalleryUpload({
       <div>
         <p className="text-sm font-medium text-navy-deep">Profile gallery</p>
         <p className="mt-1 text-xs text-ink-muted">
-          Upload multiple photos. Visitors can swipe through them on the homepage.
+          Upload multiple photos. They are saved automatically after upload.
         </p>
       </div>
 
@@ -92,24 +111,25 @@ export function ProfileGalleryUpload({
                 <div className="flex gap-1">
                   <button
                     type="button"
-                    onClick={() => move(index, -1)}
-                    disabled={index === 0}
+                    onClick={() => void move(index, -1)}
+                    disabled={index === 0 || saving}
                     className="rounded-md border border-[var(--line)] px-2 py-1 text-xs disabled:opacity-40"
                   >
                     ←
                   </button>
                   <button
                     type="button"
-                    onClick={() => move(index, 1)}
-                    disabled={index === urls.length - 1}
+                    onClick={() => void move(index, 1)}
+                    disabled={index === urls.length - 1 || saving}
                     className="rounded-md border border-[var(--line)] px-2 py-1 text-xs disabled:opacity-40"
                   >
                     →
                   </button>
                   <button
                     type="button"
-                    onClick={() => removeAt(index)}
-                    className="rounded-md border border-red-500/30 px-2 py-1 text-xs text-red-500"
+                    onClick={() => void removeAt(index)}
+                    disabled={saving}
+                    className="rounded-md border border-red-500/30 px-2 py-1 text-xs text-red-500 disabled:opacity-40"
                   >
                     Remove
                   </button>
@@ -130,7 +150,12 @@ export function ProfileGalleryUpload({
         }}
         className="block w-full text-sm text-ink-muted"
       />
-      {uploading ? <p className="text-sm text-accent">Uploading...</p> : null}
+      {uploading || saving ? (
+        <p className="text-sm text-accent">
+          {uploading ? "Uploading..." : "Saving..."}
+        </p>
+      ) : null}
+      {savedMsg ? <p className="text-sm text-accent">{savedMsg}</p> : null}
       {error ? <p className="text-sm text-red-500">{error}</p> : null}
     </div>
   );
